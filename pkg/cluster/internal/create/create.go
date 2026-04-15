@@ -39,6 +39,7 @@ import (
 	"sigs.k8s.io/kind/pkg/cluster/internal/create/actions/kubeadminit"
 	"sigs.k8s.io/kind/pkg/cluster/internal/create/actions/kubeadmjoin"
 	"sigs.k8s.io/kind/pkg/cluster/internal/create/actions/loadbalancer"
+	"sigs.k8s.io/kind/pkg/cluster/internal/create/actions/postreadymanifests"
 	"sigs.k8s.io/kind/pkg/cluster/internal/create/actions/waitforready"
 	"sigs.k8s.io/kind/pkg/cluster/internal/kubeconfig"
 )
@@ -124,9 +125,10 @@ func Cluster(logger log.Logger, p providers.Provider, opts *ClusterOptions) erro
 		}
 		// add remaining steps
 		actionsToRun = append(actionsToRun,
-			installstorage.NewAction(),                // install StorageClass
-			kubeadmjoin.NewAction(),                   // run kubeadm join
-			waitforready.NewAction(opts.WaitForReady), // wait for cluster readiness
+			installstorage.NewAction(),                  // install StorageClass
+			kubeadmjoin.NewAction(),                     // run kubeadm join
+			waitforready.NewAction(opts.WaitForReady),   // wait for cluster readiness
+			postreadymanifests.NewAction(),              // apply post-ready manifests
 		)
 	}
 

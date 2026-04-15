@@ -67,6 +67,11 @@ func (in *Cluster) DeepCopyInto(out *Cluster) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.PostReadyManifests != nil {
+		in, out := &in.PostReadyManifests, &out.PostReadyManifests
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
@@ -149,6 +154,21 @@ func (in *Node) DeepCopyInto(out *Node) {
 	if in.KubeadmConfigPatchesJSON6902 != nil {
 		in, out := &in.KubeadmConfigPatchesJSON6902, &out.KubeadmConfigPatchesJSON6902
 		*out = make([]PatchJSON6902, len(*in))
+		copy(*out, *in)
+	}
+	if in.DNS != nil {
+		in, out := &in.DNS, &out.DNS
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.ExtraArgs != nil {
+		in, out := &in.ExtraArgs, &out.ExtraArgs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.PostCreateCommands != nil {
+		in, out := &in.PostCreateCommands, &out.PostCreateCommands
+		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
 	return

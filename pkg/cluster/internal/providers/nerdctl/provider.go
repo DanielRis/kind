@@ -90,8 +90,23 @@ func (p *provider) Provision(status *cli.Status, cfg *config.Cluster) (err error
 	}
 
 	// ensure the pre-requisite network exists
-	if err := ensureNetwork(fixedNetworkName, p.Binary()); err != nil {
-		return errors.Wrap(err, "failed to ensure nerdctl network")
+	networkName := fixedNetworkName
+	if cfg.Networking.DockerNetwork != "" {
+		networkName = cfg.Networking.DockerNetwork
+	}
+	if cfg.Networking.DockerNetwork != "" {
+		// User specified a pre-existing network; verify it exists but don't create
+		exists, err := checkIfNetworkExists(networkName, p.Binary())
+		if err != nil {
+			return errors.Wrap(err, "failed to check nerdctl network")
+		}
+		if !exists {
+			return errors.Errorf("network %q not found; dockerNetwork must refer to a pre-existing network", networkName)
+		}
+	} else {
+		if err := ensureNetwork(networkName, p.Binary()); err != nil {
+			return errors.Wrap(err, "failed to ensure nerdctl network")
+		}
 	}
 
 	// actually provision the cluster
@@ -100,7 +115,7 @@ func (p *provider) Provision(status *cli.Status, cfg *config.Cluster) (err error
 	defer func() { status.End(err == nil) }()
 
 	// plan creating the containers
-	createContainerFuncs, err := planCreation(cfg, fixedNetworkName, p.Binary())
+	createContainerFuncs, err := planCreation(cfg, networkName, p.Binary())
 	if err != nil {
 		return err
 	}
