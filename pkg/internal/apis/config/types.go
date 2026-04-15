@@ -69,6 +69,10 @@ type Cluster struct {
 	// in the order listed.
 	// These should be YAML or JSON formatting RFC 6902 JSON patches
 	ContainerdConfigPatchesJSON6902 []string
+
+	// PostReadyManifests are Kubernetes YAML manifests applied after the cluster
+	// reaches Ready state but before kind returns.
+	PostReadyManifests []string
 }
 
 // Node contains settings for a node in the `kind` Cluster.
@@ -97,6 +101,16 @@ type Node struct {
 	// ExtraPortMappings describes additional port mappings for the node container
 	// binded to a host Port
 	ExtraPortMappings []PortMapping
+
+	// DNS defines custom DNS server IPs for this node container.
+	DNS []string
+
+	// ExtraArgs are additional arguments to pass to the container runtime run/create command.
+	ExtraArgs []string
+
+	// PostCreateCommands are shell commands executed inside the node container
+	// after creation but before kubeadm init/join.
+	PostCreateCommands []string
 
 	// KubeadmConfigPatches are applied to the generated kubeadm config as
 	// strategic merge patches to `kustomize build` internally
@@ -152,6 +166,8 @@ type Networking struct {
 	KubeProxyMode ProxyMode
 	// DNSSearch defines the DNS search domain to use for nodes. If not set, this will be inherited from the host.
 	DNSSearch *[]string
+	// DockerNetwork is the name of an existing container runtime network to use.
+	DockerNetwork string
 }
 
 // ClusterIPFamily defines cluster network IP family

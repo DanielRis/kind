@@ -32,6 +32,7 @@ func Convertv1alpha4(in *v1alpha4.Cluster) *Cluster {
 		KubeadmConfigPatchesJSON6902:    make([]PatchJSON6902, len(in.KubeadmConfigPatchesJSON6902)),
 		ContainerdConfigPatches:         in.ContainerdConfigPatches,
 		ContainerdConfigPatchesJSON6902: in.ContainerdConfigPatchesJSON6902,
+		PostReadyManifests:              in.PostReadyManifests,
 	}
 
 	for i := range in.Nodes {
@@ -56,6 +57,9 @@ func convertv1alpha4Node(in *v1alpha4.Node, out *Node) {
 	out.ExtraMounts = make([]Mount, len(in.ExtraMounts))
 	out.ExtraPortMappings = make([]PortMapping, len(in.ExtraPortMappings))
 	out.KubeadmConfigPatchesJSON6902 = make([]PatchJSON6902, len(in.KubeadmConfigPatchesJSON6902))
+	out.DNS = in.DNS
+	out.ExtraArgs = in.ExtraArgs
+	out.PostCreateCommands = in.PostCreateCommands
 
 	for i := range in.ExtraMounts {
 		convertv1alpha4Mount(&in.ExtraMounts[i], &out.ExtraMounts[i])
@@ -86,6 +90,7 @@ func convertv1alpha4Networking(in *v1alpha4.Networking, out *Networking) {
 	out.ServiceSubnet = in.ServiceSubnet
 	out.DisableDefaultCNI = in.DisableDefaultCNI
 	out.DNSSearch = in.DNSSearch
+	out.DockerNetwork = in.DockerNetwork
 }
 
 func convertv1alpha4Mount(in *v1alpha4.Mount, out *Mount) {

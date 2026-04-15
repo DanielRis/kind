@@ -75,12 +75,19 @@ func (p *provider) Provision(status *cli.Status, cfg *config.Cluster) (err error
 
 	// ensure the pre-requisite network exists
 	networkName := fixedNetworkName
-	if n := os.Getenv("KIND_EXPERIMENTAL_PODMAN_NETWORK"); n != "" {
+	if cfg.Networking.DockerNetwork != "" {
+		networkName = cfg.Networking.DockerNetwork
+	} else if n := os.Getenv("KIND_EXPERIMENTAL_PODMAN_NETWORK"); n != "" {
 		p.logger.Warn("WARNING: Overriding podman network due to KIND_EXPERIMENTAL_PODMAN_NETWORK")
 		p.logger.Warn("WARNING: Here be dragons! This is not supported currently.")
 		networkName = n
 	}
-	if err := ensureNetwork(networkName); err != nil {
+	if cfg.Networking.DockerNetwork != "" {
+		// User specified a pre-existing network; verify it exists but don't create
+		if !checkIfNetworkExists(networkName) {
+			return errors.Errorf("podman network %q not found; dockerNetwork must refer to a pre-existing network", networkName)
+		}
+	} else if err := ensureNetwork(networkName); err != nil {
 		return errors.Wrap(err, "failed to ensure podman network")
 	}
 

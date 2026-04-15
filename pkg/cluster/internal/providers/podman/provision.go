@@ -108,7 +108,15 @@ func planCreation(cfg *config.Cluster, networkName string) (createContainerFuncs
 				if err != nil {
 					return err
 				}
-				return createContainerWithWaitUntilSystemdReachesMultiUserSystem(name, args)
+				if err := createContainerWithWaitUntilSystemdReachesMultiUserSystem(name, args); err != nil {
+					return err
+				}
+				for _, cmd := range node.PostCreateCommands {
+					if err := exec.Command("podman", "exec", name, "bash", "-c", cmd).Run(); err != nil {
+						return errors.Wrapf(err, "post-create command failed: %s", cmd)
+					}
+				}
+				return nil
 			})
 		case config.WorkerRole:
 			createContainerFuncs = append(createContainerFuncs, func() error {
@@ -116,7 +124,15 @@ func planCreation(cfg *config.Cluster, networkName string) (createContainerFuncs
 				if err != nil {
 					return err
 				}
-				return createContainerWithWaitUntilSystemdReachesMultiUserSystem(name, args)
+				if err := createContainerWithWaitUntilSystemdReachesMultiUserSystem(name, args); err != nil {
+					return err
+				}
+				for _, cmd := range node.PostCreateCommands {
+					if err := exec.Command("podman", "exec", name, "bash", "-c", cmd).Run(); err != nil {
+						return errors.Wrapf(err, "post-create command failed: %s", cmd)
+					}
+				}
+				return nil
 			})
 		default:
 			return nil, errors.Errorf("unknown node role: %q", node.Role)
@@ -224,6 +240,14 @@ func runArgsForNode(node *config.Node, clusterIPFamily config.ClusterIPFamily, n
 	case config.ControlPlaneRole:
 		args = append(args, "-e", "KUBECONFIG=/etc/kubernetes/admin.conf")
 	}
+
+	// pass custom DNS servers if configured
+	for _, dns := range node.DNS {
+		args = append(args, "--dns", dns)
+	}
+
+	// append any extra container runtime args
+	args = append(args, node.ExtraArgs...)
 
 	// finally, specify the image to run
 	_, image := sanitizeImage(node.Image)

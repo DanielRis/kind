@@ -84,6 +84,13 @@ type Cluster struct {
 	// These should be YAML or JSON formatting RFC 6902 JSON patches
 	// NOTE: These are not currently version-aware.
 	ContainerdConfigPatchesJSON6902 []string `yaml:"containerdConfigPatchesJSON6902,omitempty" json:"containerdConfigPatchesJSON6902,omitempty"`
+
+	// PostReadyManifests are Kubernetes YAML manifests applied after the cluster
+	// reaches Ready state but before kind returns. Each entry is an inline YAML
+	// string containing one or more Kubernetes resources (separated by ---).
+	// Use this for admission webhooks, CRDs, or other resources that must exist
+	// before any user workloads.
+	PostReadyManifests []string `yaml:"postReadyManifests,omitempty" json:"postReadyManifests,omitempty"`
 }
 
 // TypeMeta partially copies apimachinery/pkg/apis/meta/v1.TypeMeta
@@ -120,6 +127,21 @@ type Node struct {
 	// ExtraPortMappings describes additional port mappings for the node container
 	// binded to a host Port
 	ExtraPortMappings []PortMapping `yaml:"extraPortMappings,omitempty" json:"extraPortMappings,omitempty"`
+
+	// DNS defines custom DNS server IPs for this node container.
+	// These are passed as --dns flags to the container runtime.
+	// If not set, the container runtime's default DNS is used.
+	DNS []string `yaml:"dns,omitempty" json:"dns,omitempty"`
+
+	// ExtraArgs are additional arguments to pass to the container runtime
+	// run/create command. These are appended after all other arguments.
+	// Use this for container runtime flags that kind does not natively support.
+	ExtraArgs []string `yaml:"extraArgs,omitempty" json:"extraArgs,omitempty"`
+
+	// PostCreateCommands are shell commands executed inside the node container
+	// after creation but before kubeadm init/join. Each entry is run via "bash -c".
+	// Use this for pre-kubeadm setup like writing resolv.conf, installing certs, etc.
+	PostCreateCommands []string `yaml:"postCreateCommands,omitempty" json:"postCreateCommands,omitempty"`
 
 	// KubeadmConfigPatches are applied to the generated kubeadm config as
 	// merge patches. The `kind` field must match the target object, and
@@ -194,6 +216,10 @@ type Networking struct {
 	KubeProxyMode ProxyMode `yaml:"kubeProxyMode,omitempty" json:"kubeProxyMode,omitempty"`
 	// DNSSearch defines the DNS search domain to use for nodes. If not set, this will be inherited from the host.
 	DNSSearch *[]string `yaml:"dnsSearch,omitempty" json:"dnsSearch,omitempty"`
+	// DockerNetwork is the name of an existing container runtime network to use.
+	// If set, kind will use this pre-existing network instead of creating the default "kind" network.
+	// The network must already exist.
+	DockerNetwork string `yaml:"dockerNetwork,omitempty" json:"dockerNetwork,omitempty"`
 }
 
 // ClusterIPFamily defines cluster network IP family

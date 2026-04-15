@@ -31,6 +31,7 @@ import (
 // see NewContext() for usage
 // https://godoc.org/github.com/docker/docker/daemon/names#pkg-constants
 var validNameRE = regexp.MustCompile(`^[a-z0-9.-]+$`)
+var validNetworkNameRE = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`)
 
 // Validate returns a ConfigErrors with an entry for each problem
 // with the config, or nil if there are none
@@ -71,6 +72,13 @@ func (c *Cluster) Validate() error {
 	if c.Networking.KubeProxyMode != IPTablesProxyMode && c.Networking.KubeProxyMode != IPVSProxyMode &&
 		c.Networking.KubeProxyMode != NoneProxyMode && c.Networking.KubeProxyMode != NFTablesProxyMode {
 		errs = append(errs, errors.Errorf("invalid kubeProxyMode: %s", c.Networking.KubeProxyMode))
+	}
+
+	// dockerNetwork should be a valid network name if set
+	if c.Networking.DockerNetwork != "" {
+		if !validNetworkNameRE.MatchString(c.Networking.DockerNetwork) {
+			errs = append(errs, errors.Errorf("invalid dockerNetwork name: %q", c.Networking.DockerNetwork))
+		}
 	}
 
 	// validate nodes
@@ -132,6 +140,13 @@ func (n *Node) Validate() error {
 
 	if err := validatePortMappings(n.ExtraPortMappings); err != nil {
 		errs = append(errs, errors.Wrapf(err, "invalid portMapping"))
+	}
+
+	// validate DNS server IPs
+	for _, dns := range n.DNS {
+		if net.ParseIP(dns) == nil {
+			errs = append(errs, errors.Errorf("invalid DNS server IP: %q", dns))
+		}
 	}
 
 	if len(errs) > 0 {
