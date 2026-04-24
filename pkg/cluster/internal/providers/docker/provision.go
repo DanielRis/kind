@@ -122,6 +122,10 @@ func planCreation(cfg *config.Cluster, networkName string) (createContainerFuncs
 						return errors.Wrapf(err, "post-create command failed: %s", cmd)
 					}
 				}
+				// write /etc/default/kubelet with KUBELET_EXTRA_ARGS before kubeadm init
+				if err := writeKubeletExtraArgs(name, node.KubeletExtraArgs); err != nil {
+					return err
+				}
 				return nil
 			})
 		case config.WorkerRole:
@@ -139,6 +143,10 @@ func planCreation(cfg *config.Cluster, networkName string) (createContainerFuncs
 						return errors.Wrapf(err, "post-create command failed: %s", cmd)
 					}
 				}
+				// write /etc/default/kubelet with KUBELET_EXTRA_ARGS before kubeadm join
+				if err := writeKubeletExtraArgs(name, node.KubeletExtraArgs); err != nil {
+					return err
+				}
 				return nil
 			})
 		default:
@@ -146,6 +154,25 @@ func planCreation(cfg *config.Cluster, networkName string) (createContainerFuncs
 		}
 	}
 	return createContainerFuncs, nil
+}
+
+// writeKubeletExtraArgs writes /etc/default/kubelet with KUBELET_EXTRA_ARGS
+// inside the node container. The kubelet systemd unit sources this file, so
+// these flags are present on the kubelet's first start (no restart needed).
+func writeKubeletExtraArgs(containerName string, extraArgs map[string]string) error {
+	if len(extraArgs) == 0 {
+		return nil
+	}
+	var flags []string
+	for k, v := range extraArgs {
+		flags = append(flags, fmt.Sprintf("--%s=%s", k, v))
+	}
+	content := fmt.Sprintf("KUBELET_EXTRA_ARGS=\"%s\"\n", strings.Join(flags, " "))
+	cmd := fmt.Sprintf("echo '%s' > /etc/default/kubelet", content)
+	if err := exec.Command("docker", "exec", containerName, "bash", "-c", cmd).Run(); err != nil {
+		return errors.Wrapf(err, "failed to write /etc/default/kubelet")
+	}
+	return nil
 }
 
 // commonArgs computes static arguments that apply to all containers

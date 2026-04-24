@@ -60,6 +60,7 @@ func convertv1alpha4Node(in *v1alpha4.Node, out *Node) {
 	out.DNS = in.DNS
 	out.ExtraArgs = in.ExtraArgs
 	out.PostCreateCommands = in.PostCreateCommands
+	out.KubeletExtraArgs = in.KubeletExtraArgs
 
 	for i := range in.ExtraMounts {
 		convertv1alpha4Mount(&in.ExtraMounts[i], &out.ExtraMounts[i])

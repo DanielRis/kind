@@ -145,16 +145,6 @@ func (in *Node) DeepCopyInto(out *Node) {
 		*out = make([]PortMapping, len(*in))
 		copy(*out, *in)
 	}
-	if in.KubeadmConfigPatches != nil {
-		in, out := &in.KubeadmConfigPatches, &out.KubeadmConfigPatches
-		*out = make([]string, len(*in))
-		copy(*out, *in)
-	}
-	if in.KubeadmConfigPatchesJSON6902 != nil {
-		in, out := &in.KubeadmConfigPatchesJSON6902, &out.KubeadmConfigPatchesJSON6902
-		*out = make([]PatchJSON6902, len(*in))
-		copy(*out, *in)
-	}
 	if in.DNS != nil {
 		in, out := &in.DNS, &out.DNS
 		*out = make([]string, len(*in))
@@ -168,6 +158,23 @@ func (in *Node) DeepCopyInto(out *Node) {
 	if in.PostCreateCommands != nil {
 		in, out := &in.PostCreateCommands, &out.PostCreateCommands
 		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.KubeletExtraArgs != nil {
+		in, out := &in.KubeletExtraArgs, &out.KubeletExtraArgs
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.KubeadmConfigPatches != nil {
+		in, out := &in.KubeadmConfigPatches, &out.KubeadmConfigPatches
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.KubeadmConfigPatchesJSON6902 != nil {
+		in, out := &in.KubeadmConfigPatchesJSON6902, &out.KubeadmConfigPatchesJSON6902
+		*out = make([]PatchJSON6902, len(*in))
 		copy(*out, *in)
 	}
 	return
