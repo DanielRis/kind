@@ -143,6 +143,13 @@ type Node struct {
 	// Use this for pre-kubeadm setup like writing resolv.conf, installing certs, etc.
 	PostCreateCommands []string `yaml:"postCreateCommands,omitempty" json:"postCreateCommands,omitempty"`
 
+	// KubeletExtraArgs are written to /etc/default/kubelet as KUBELET_EXTRA_ARGS
+	// before kubeadm init/join. The kubelet systemd unit sources this file, so
+	// these flags are available on the kubelet's first start — no restart needed.
+	// Use this for flags that can't go in KubeletConfiguration (e.g.,
+	// --image-credential-provider-bin-dir, --image-credential-provider-config).
+	KubeletExtraArgs map[string]string `yaml:"kubeletExtraArgs,omitempty" json:"kubeletExtraArgs,omitempty"`
+
 	// KubeadmConfigPatches are applied to the generated kubeadm config as
 	// merge patches. The `kind` field must match the target object, and
 	// if `apiVersion` is specified it will only be applied to matching objects.
