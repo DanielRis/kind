@@ -112,6 +112,11 @@ type Node struct {
 	// after creation but before kubeadm init/join.
 	PostCreateCommands []string
 
+	// PostCreateFiles are files written into the node container after
+	// creation, before PostCreateCommands run. Content is delivered over
+	// stdin, never on a command line, and never included in errors.
+	PostCreateFiles []NodeFile
+
 	// KubeletExtraArgs are written to /etc/default/kubelet as KUBELET_EXTRA_ARGS
 	// before kubeadm init/join.
 	KubeletExtraArgs map[string]string
@@ -126,6 +131,21 @@ type Node struct {
 	// as patchesJson6902 to `kustomize build`
 	KubeadmConfigPatchesJSON6902 []PatchJSON6902
 }
+
+// NodeFile is a file written into a node container.
+type NodeFile struct {
+	// Path is the absolute path of the file inside the node.
+	Path string
+	// Content is the file content.
+	Content string
+	// Permissions are the file's octal permission bits, e.g. "0644".
+	// Empty means DefaultNodeFilePermissions.
+	Permissions string
+}
+
+// DefaultNodeFilePermissions are the permissions of a NodeFile that does
+// not set any.
+const DefaultNodeFilePermissions = "0600"
 
 // NodeRole defines possible role for nodes in a Kubernetes cluster managed by `kind`
 type NodeRole string

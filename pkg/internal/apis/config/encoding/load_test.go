@@ -123,3 +123,21 @@ func TestLoadCurrent(t *testing.T) {
 		})
 	}
 }
+
+func TestLoadPostCreateFiles(t *testing.T) {
+	t.Parallel()
+	cfg, err := Load("./testdata/v1alpha4/valid-post-create-files.yaml")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	files := cfg.Nodes[0].PostCreateFiles
+	if len(files) != 2 {
+		t.Fatalf("PostCreateFiles = %d entries, want 2", len(files))
+	}
+	if files[0].Path != "/etc/kubernetes/pki/simfra-sa/sa-signing-key.pem" || files[0].Permissions != "0600" || files[0].Content != "not-a-real-key\n" {
+		t.Errorf("PostCreateFiles[0] = %+v", files[0])
+	}
+	if files[1].Path != "/etc/motd" || files[1].Permissions != "" || files[1].Content != "hello" {
+		t.Errorf("PostCreateFiles[1] = %+v", files[1])
+	}
+}

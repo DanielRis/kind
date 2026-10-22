@@ -143,6 +143,15 @@ type Node struct {
 	// Use this for pre-kubeadm setup like writing resolv.conf, installing certs, etc.
 	PostCreateCommands []string `yaml:"postCreateCommands,omitempty" json:"postCreateCommands,omitempty"`
 
+	// PostCreateFiles are files written into the node container after
+	// creation, before PostCreateCommands run and before kubeadm init/join.
+	// File content is streamed to the container over stdin and is never part
+	// of a command line, so it does not show up in process listings or in
+	// container runtime exec events / inspect output, and it is never
+	// included in error messages. Use this for secret material such as
+	// private keys or credentials.
+	PostCreateFiles []NodeFile `yaml:"postCreateFiles,omitempty" json:"postCreateFiles,omitempty"`
+
 	// KubeletExtraArgs are written to /etc/default/kubelet as KUBELET_EXTRA_ARGS
 	// before kubeadm init/join. The kubelet systemd unit sources this file, so
 	// these flags are available on the kubelet's first start — no restart needed.
@@ -177,6 +186,20 @@ type Node struct {
 	// The node-level patches will be applied after the cluster-level patches
 	// have been applied. (See Cluster.KubeadmConfigPatchesJSON6902)
 	KubeadmConfigPatchesJSON6902 []PatchJSON6902 `yaml:"kubeadmConfigPatchesJSON6902,omitempty" json:"kubeadmConfigPatchesJSON6902,omitempty"`
+}
+
+// NodeFile is a file written into a node container.
+type NodeFile struct {
+	// Path is the absolute path of the file inside the node. Missing parent
+	// directories are created.
+	Path string `yaml:"path" json:"path"`
+
+	// Content is the file content.
+	Content string `yaml:"content,omitempty" json:"content,omitempty"`
+
+	// Permissions are the file's octal permission bits, e.g. "0644".
+	// Defaults to "0600".
+	Permissions string `yaml:"permissions,omitempty" json:"permissions,omitempty"`
 }
 
 // NodeRole defines possible role for nodes in a Kubernetes cluster managed by `kind`

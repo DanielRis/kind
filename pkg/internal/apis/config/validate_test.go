@@ -19,6 +19,7 @@ package config
 import (
 	"fmt"
 	"sigs.k8s.io/kind/pkg/internal/assert"
+	"strings"
 	"testing"
 
 	"sigs.k8s.io/kind/pkg/errors"
@@ -401,6 +402,33 @@ func TestNodeValidate(t *testing.T) {
 			}(),
 			ExpectErrors: 0,
 		},
+		{
+			TestName: "Valid post-create files",
+			Node: func() Node {
+				cfg := newDefaultedNode(ControlPlaneRole)
+				cfg.PostCreateFiles = []NodeFile{
+					{Path: "/etc/kubernetes/pki/ca.key", Content: "secret", Permissions: "0600"},
+					{Path: "/etc/motd", Content: "hello"},
+				}
+				return cfg
+			}(),
+			ExpectErrors: 0,
+		},
+		{
+			TestName: "Invalid post-create files",
+			Node: func() Node {
+				cfg := newDefaultedNode(ControlPlaneRole)
+				cfg.PostCreateFiles = []NodeFile{
+					{Path: "relative/path", Content: "secret"},
+					{Path: "/", Content: "secret"},
+					{Path: "/etc/x", Content: "secret", Permissions: "rw-------"},
+					{Path: "/etc/y", Content: "secret", Permissions: "0800"},
+					{Path: "/etc/z", Content: "secret", Permissions: "17777"},
+				}
+				return cfg
+			}(),
+			ExpectErrors: 5,
+		},
 	}
 
 	for _, tc := range cases {
@@ -426,6 +454,23 @@ func TestNodeValidate(t *testing.T) {
 				t.Errorf("expected %d errors but got len(%v) = %d", tc.ExpectErrors, errs, len(errs))
 			}
 		})
+	}
+}
+
+func TestNodeValidatePostCreateFilesOmitsContent(t *testing.T) {
+	t.Parallel()
+	const secret = "-----BEGIN RSA PRIVATE KEY-----top-secret"
+	cfg := newDefaultedNode(ControlPlaneRole)
+	cfg.PostCreateFiles = []NodeFile{
+		{Path: "relative", Content: secret},
+		{Path: "/etc/x", Content: secret, Permissions: "bad"},
+	}
+	err := cfg.Validate()
+	if err == nil {
+		t.Fatal("expected validation errors")
+	}
+	if strings.Contains(err.Error(), "top-secret") {
+		t.Errorf("validation error leaks file content: %v", err)
 	}
 }
 

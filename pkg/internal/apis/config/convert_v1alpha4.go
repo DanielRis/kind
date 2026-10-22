@@ -60,6 +60,10 @@ func convertv1alpha4Node(in *v1alpha4.Node, out *Node) {
 	out.DNS = in.DNS
 	out.ExtraArgs = in.ExtraArgs
 	out.PostCreateCommands = in.PostCreateCommands
+	out.PostCreateFiles = make([]NodeFile, len(in.PostCreateFiles))
+	for i, f := range in.PostCreateFiles {
+		out.PostCreateFiles[i] = NodeFile{Path: f.Path, Content: f.Content, Permissions: f.Permissions}
+	}
 	out.KubeletExtraArgs = in.KubeletExtraArgs
 
 	for i := range in.ExtraMounts {

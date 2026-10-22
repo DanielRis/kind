@@ -116,6 +116,10 @@ func planCreation(cfg *config.Cluster, networkName string) (createContainerFuncs
 				if err := createContainerWithWaitUntilSystemdReachesMultiUserSystem(name, args); err != nil {
 					return err
 				}
+				// write post-create files (content over stdin, never in argv)
+				if err := common.WriteNodeFiles(exec.DefaultCmder, "docker", name, node.PostCreateFiles); err != nil {
+					return err
+				}
 				// run post-create commands
 				for _, cmd := range node.PostCreateCommands {
 					if err := exec.Command("docker", "exec", name, "bash", "-c", cmd).Run(); err != nil {
@@ -135,6 +139,10 @@ func planCreation(cfg *config.Cluster, networkName string) (createContainerFuncs
 					return err
 				}
 				if err := createContainerWithWaitUntilSystemdReachesMultiUserSystem(name, args); err != nil {
+					return err
+				}
+				// write post-create files (content over stdin, never in argv)
+				if err := common.WriteNodeFiles(exec.DefaultCmder, "docker", name, node.PostCreateFiles); err != nil {
 					return err
 				}
 				// run post-create commands

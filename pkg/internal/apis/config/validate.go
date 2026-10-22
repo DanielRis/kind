@@ -19,7 +19,9 @@ package config
 import (
 	"fmt"
 	"net"
+	"path"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"sigs.k8s.io/kind/pkg/errors"
@@ -149,10 +151,31 @@ func (n *Node) Validate() error {
 		}
 	}
 
+	// validate post-create files; errors name the path, never the content
+	for _, f := range n.PostCreateFiles {
+		if err := validateNodeFile(f); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
 	if len(errs) > 0 {
 		return errors.NewAggregate(errs)
 	}
 
+	return nil
+}
+
+// validateNodeFile checks a NodeFile's path and permissions.
+func validateNodeFile(f NodeFile) error {
+	if !path.IsAbs(f.Path) || path.Clean(f.Path) == "/" {
+		return errors.Errorf("invalid postCreateFiles path %q: must be an absolute file path", f.Path)
+	}
+	if f.Permissions != "" {
+		mode, err := strconv.ParseUint(f.Permissions, 8, 32)
+		if err != nil || mode > 0o7777 {
+			return errors.Errorf("invalid postCreateFiles permissions %q for %q: must be octal, e.g. \"0600\"", f.Permissions, f.Path)
+		}
+	}
 	return nil
 }
 

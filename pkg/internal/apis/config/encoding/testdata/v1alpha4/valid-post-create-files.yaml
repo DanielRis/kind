@@ -1,0 +1,11 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  postCreateFiles:
+  - path: /etc/kubernetes/pki/simfra-sa/sa-signing-key.pem
+    permissions: "0600"
+    content: |
+      not-a-real-key
+  - path: /etc/motd
+    content: hello
